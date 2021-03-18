@@ -3,6 +3,7 @@ import firebase from "firebase/app";
 import "firebase/auth";
 import firebaseConfig from './firebase.config';
 import { useState } from 'react';
+import reactDom from 'react-dom';
 firebase.initializeApp(firebaseConfig);
 
 function App() {
@@ -39,7 +40,9 @@ function App() {
         isSignedIn : false,
         name: '',
         email: '',
-        photo: ''
+        photo: '',
+        error: '',
+        success: false
       }
       setUser(signedOutUser);
     })
@@ -48,8 +51,24 @@ function App() {
     })
     console.log('signOut Clicked');
   }
-  const handleSubmit = () => {
-
+  const handleSubmit = (event) => {
+    // console.log(user.email, user.password);
+    if (user.email && user.password) {
+      firebase.auth().createUserWithEmailAndPassword(user.email, user.password)
+        .then(res => {
+          const newUserInfo = {...user}
+          newUserInfo.error = '';
+          newUserInfo.success = true;
+          setUser(newUserInfo);
+        })
+        .catch((error) => {
+          const newUserInfo = {...user}
+          newUserInfo.error = error.message;
+          newUserInfo.success = false;
+          setUser(newUserInfo);
+        });
+    }
+    event.preventDefault();
   }
   const handleBlur = (event) => {
     // console.log(event.target.name, event.target.value);
@@ -83,10 +102,13 @@ function App() {
       }
       <h1>Our own Authentication</h1>
       <form onSubmit={handleSubmit}>
+        <input type="text" onBlur={handleBlur} name="name" id=""/><br/>
         <input type="email" onBlur={handleBlur} name="email" required/><br/>
         <input type="password" onBlur={handleBlur} name="password" required/><br/>
         <input type="submit" value="submit"/>
       </form>
+      <p style={{color:'red'}}>{user.error}</p>
+      {user.success && <p style={{color:'green'}}>user created successfully</p>}
     </div>
   );
 }
